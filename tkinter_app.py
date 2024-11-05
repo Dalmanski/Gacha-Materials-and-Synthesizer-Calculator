@@ -80,7 +80,7 @@ def on_rank_select(event):
         mat_entries.append(entry)
         entry.bind("<KeyRelease>", check_inputs)
 
-    req_label = tk.Label(mat_frame, text="How many materials do you need?", bg="#2E2E2E", fg="white", font=(FONT_FAMILY, 12))
+    req_label = tk.Label(mat_frame, text=f"How many {ranks[start_idx]} material do you need?", bg="#2E2E2E", fg="white", font=(FONT_FAMILY, 12))
     req_label.grid(row=len(ranks), column=0, sticky="w", pady=(20, 5))
     req_entry = tk.Entry(mat_frame, bg="#5C5C5C", fg="white", justify='center', font=(FONT_FAMILY, 12))
     req_entry.grid(row=len(ranks), column=1)
@@ -94,6 +94,7 @@ def check_inputs(event=None):
     if all_filled:
         rankNeed = rank_combobox.get()
         reqCnt = int(material_needed_entry.get())
+        matCnt()
         action_label.config(text=f"Do you want to keep your {rankNeed} material count at {reqCnt},\n"
                                  f"or deduct your current count ({reqCnt} - {mats[start_idx]})?")
         
@@ -107,7 +108,7 @@ def check_inputs(event=None):
 
 root = tk.Tk()
 root.title("Material Calculator")
-root.geometry("425x600")
+root.geometry("460x600")
 root.resizable(False, False)
 root.configure(bg="#2E2E2E")
 
