@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 
 FONT_FAMILY = "MS PGothic"
 FONT_SIZE = 13
@@ -27,15 +27,12 @@ color_theme("contrast dark mode")
 ranks = ["yellow", "purple", "blue", "green"]
 mats = [0, 0, 0, 0]
 
-def matCnt():
+def matCount():
     global mats
-    try:
-        for i in range(len(mat_entries)):
-            mats[start_idx + i] = int(mat_entries[i].get())
-    except ValueError:
-        messagebox.showerror("Input Error", "Please enter valid numbers for material counts.")
+    for i in range(len(mat_entries)):
+        mats[start_idx + i] = int(mat_entries[i].get())
 
-def calc(idx, reqCnt):
+def calculate(idx, reqCnt):
     global mats
     temp = reqCnt
     clear_tktext()
@@ -46,7 +43,7 @@ def calc(idx, reqCnt):
     for i in range(idx + 1, len(ranks)):
         if (temp * 3) <= mats[i]:
             text += f"\n\nYou have enough {ranks[i]} material."
-            text += f"\nYou can now buy {temp * 3} on {ranks[i - 1]} material."
+            text += f"\nYou can now buy {temp} pieces on {ranks[i - 1]} material."
             if ranks[i - 1] != ranks[idx]:
                 text += f"\n\nCraft all materials from {ranks[i - 1]} to {ranks[idx]} materials "
                 text += f"to get a total of {reqCnt} {ranks[idx]} material." 
@@ -61,30 +58,22 @@ def calc(idx, reqCnt):
     result_tktext_in_center(text)
 
 def perform_calculation():
-    rankNeed = rank_combobox.get()
-    if rankNeed not in ranks:
-        messagebox.showerror("Selection Error", "Please select a valid rank.")
-        return
-    try:
-        reqCnt = int(mat_needed_entry.get())
-    except ValueError:
-        messagebox.showerror("Input Error", "Please enter a valid number for required material.")
-        return
-
-    matCnt()
+    rankNeed = rank_combobox.get().lower()
+    reqCnt = int(mat_needed_entry.get())
+    matCount()
     idxRank = ranks.index(rankNeed)
     action = action_combobox.get()
 
     if action == "Keep" or action == "":
-        calc(idxRank, reqCnt)
+        calculate(idxRank, reqCnt)
     elif action == "Deduct":
-        calc(idxRank, reqCnt - mats[idxRank])
+        calculate(idxRank, reqCnt - mats[idxRank])
     elif action == "Add":
-        calc(idxRank, reqCnt + mats[idxRank])
+        calculate(idxRank, reqCnt + mats[idxRank])
 
 def on_rank_select(event):
     global start_idx
-    rankNeed = rank_combobox.get()
+    rankNeed = rank_combobox.get().lower()
     if rankNeed not in ranks:
         return  
     start_idx = ranks.index(rankNeed)    
@@ -120,18 +109,26 @@ def on_rank_select(event):
     mat_needed_entry = req_entry
 
 def check_inputs(event=None):
+
+    def format_entry(entries):
+        if entries.get().strip() == "":
+            entries.delete(0, tk.END)
+            entries.insert(0, "0")
+        else:
+            formatted_value = str(int(entries.get()))
+            entries.delete(0, tk.END)
+            entries.insert(0, formatted_value)
+
     for entry in mat_entries:
-        if entry.get().strip() == "":
-            entry.delete(0, tk.END)
-            entry.insert(0, "0")
+        format_entry(entry)
 
+    format_entry(mat_needed_entry)
     all_filled = all(entry.get().strip() != '0' for entry in mat_entries) and mat_needed_entry.get().strip() != '0'
-
+    
     if all_filled:
         rankNeed = rank_combobox.get()
         reqCnt = int(mat_needed_entry.get())
-        matCnt()     
-        
+        matCount()   
         if reqCnt > mats[start_idx]:
             action_combobox["values"] = ["Keep", "Deduct", "Add"]
             action_label.config(text=f"Do you want to keep your {rankNeed} material count at {reqCnt}\n"
@@ -150,6 +147,7 @@ def check_inputs(event=None):
         action_combobox.grid_forget()
         calc_button.grid_forget()
 
+
 root = tk.Tk()
 root.title("Gacha Materials and Synthesizer Calculator")
 window_width, window_height = 460, 620
@@ -167,7 +165,8 @@ content_frame.pack(pady=10, fill="both", expand=True)
 rank_label = tk.Label(content_frame, text="What rank material do you need?", bg=BG_COLOR, fg=TEXT_COLOR, font=(FONT_FAMILY, FONT_SIZE))
 rank_label.grid(row=0, column=0, columnspan=2, pady=5)
 
-rank_combobox = ttk.Combobox(content_frame, values=["yellow", "purple", "blue"], state="readonly", style="TCombobox", justify='center', font=(FONT_FAMILY, FONT_SIZE))
+rank_combobox = ttk.Combobox(content_frame, values=["Yellow", "Purple", "Blue"], state="readonly", style="TCombobox", justify='center', font=(FONT_FAMILY, FONT_SIZE))
+rank_combobox.set("Yellow")
 rank_combobox.bind("<<ComboboxSelected>>", on_rank_select)
 rank_combobox.grid(row=1, column=0, columnspan=2)
 
@@ -181,6 +180,7 @@ action_label.grid(row=3, column=0, columnspan=2, pady=5)
 action_label.grid_forget()
 
 action_combobox = ttk.Combobox(content_frame, state="readonly", style="TCombobox", justify='center', font=(FONT_FAMILY, FONT_SIZE))
+action_combobox.set("Keep")
 action_combobox.grid(row=4, column=0, columnspan=2)
 action_combobox.grid_forget()
 
