@@ -4,6 +4,7 @@ from tkinter import ttk
 FONT_FAMILY = "MS PGothic"
 FONT_SIZE = 13
 
+# Light mode theme
 TEXT_COLOR = "black"
 BG_COLOR = "#FFFFFF"
 ENTRY_BG = "#F0F0F0"
@@ -32,21 +33,26 @@ def matCount():
     for i in range(len(mat_entries)):
         mats[start_idx + i] = int(mat_entries[i].get())
 
-def calculate(idx, reqCnt):
+def calculate(idx, reqCount):
     global mats
-    temp = reqCnt
+    temp = reqCount
     clear_tktext()
 
-    text = f"\nYour {ranks[idx]} material needed: {reqCnt}\n"
+    text = f"\nYour {ranks[idx]} material needed: {reqCount}\n"
     text += "\nResults:"
     
     for i in range(idx + 1, len(ranks)):
+        total = 0
+        for j in range(len(ranks) - 1, idx, -1):
+            total = (total // 3) + mats[j]
+
         if (temp * 3) <= mats[i]:
             text += f"\n\nYou have enough {ranks[i]} material."
             text += f"\nYou can now buy {temp} pieces on {ranks[i - 1]} material."
             if ranks[i - 1] != ranks[idx]:
                 text += f"\n\nCraft all materials from {ranks[i - 1]} to {ranks[idx]} materials "
-                text += f"to get a total of {reqCnt} {ranks[idx]} material." 
+                text += f"to get a total of {reqCount} {ranks[idx]} material."
+            text += f"\n\nIf you want to craft ALL of them, your total {ranks[idx]} material is {total} pieces."
             break
         else:
             temp = (temp * 3) - mats[i]
@@ -59,17 +65,17 @@ def calculate(idx, reqCnt):
 
 def perform_calculation():
     rankNeed = rank_combobox.get().lower()
-    reqCnt = int(mat_needed_entry.get())
+    reqCount = int(mat_needed_entry.get())
     matCount()
     idxRank = ranks.index(rankNeed)
     action = action_combobox.get()
 
     if action == "Keep" or action == "":
-        calculate(idxRank, reqCnt)
+        calculate(idxRank, reqCount)
     elif action == "Deduct":
-        calculate(idxRank, reqCnt - mats[idxRank])
+        calculate(idxRank, reqCount - mats[idxRank])
     elif action == "Add":
-        calculate(idxRank, reqCnt + mats[idxRank])
+        calculate(idxRank, reqCount + mats[idxRank])
 
 def on_rank_select(event):
     global start_idx
@@ -123,25 +129,29 @@ def check_inputs(event=None):
         format_entry(entry)
 
     format_entry(mat_needed_entry)
-    all_filled = all(entry.get().strip() != '0' for entry in mat_entries) and mat_needed_entry.get().strip() != '0'
     
-    if all_filled:
-        rankNeed = rank_combobox.get()
-        reqCnt = int(mat_needed_entry.get())
-        matCount()   
-        if reqCnt > mats[start_idx]:
-            action_combobox["values"] = ["Keep", "Deduct", "Add"]
-            action_label.config(text=f"Do you want to keep your {rankNeed} material count at {reqCnt}\n"
-                                     f"or add your current count ({reqCnt} + {mats[start_idx]} = {reqCnt + mats[start_idx]})?\n"
-                                     f"or deduct your current count ({reqCnt} - {mats[start_idx]} = {reqCnt - mats[start_idx]})?")
-        else:
-            action_combobox["values"] = ["Keep", "Add"]
-            action_label.config(text=f"Do you want to keep your {rankNeed} material count at {reqCnt}\n"
-                                     f"or add your current count ({reqCnt} + {mats[start_idx]} = {reqCnt + mats[start_idx]})?")
-        
+    if mat_needed_entry.get().strip() != '0':
+        rankNeed = rank_combobox.get().lower()
+        reqCount = int(mat_needed_entry.get())
+        matCount()     
         action_label.grid(row=3, column=0, columnspan=2, pady=5)
         action_combobox.grid(row=4, column=0, columnspan=2)
         calc_button.grid(row=5, column=0, columnspan=2, pady=10)
+        texted = f"Do you want to keep your {rankNeed} material count at {reqCount}\n"
+        action_combobox["values"] = ["Keep"]
+        if reqCount > mats[start_idx]:  
+            if mats[start_idx] != 0:
+                action_combobox["values"] = ["Keep", "Deduct", "Add"]
+                texted += f"or add your current count ({reqCount} + {mats[start_idx]} = {reqCount + mats[start_idx]})?\n"
+                texted += f"or deduct your current count ({reqCount} - {mats[start_idx]} = {reqCount - mats[start_idx]})?"
+            else:
+                texted = f"Since 0 is your current {rankNeed} material count,\nwe should compute this right away."
+                action_combobox.grid_forget()                      
+        else:
+            action_combobox["values"] = ["Keep", "Add"]
+            texted += f"or add your current count ({reqCount} + {mats[start_idx]} = {reqCount + mats[start_idx]})?"
+            
+        action_label.config(text = texted)
     else:
         action_label.grid_forget()
         action_combobox.grid_forget()
@@ -237,6 +247,7 @@ def result_tktext_in_center(text):
     check_scrollbar()
 
 result_tktext_in_center("\nHi, Welcome to Gacha Materials and Synthesizer Calculator")
+on_rank_select("yellow")
 
 def on_closing():
     root.quit()
